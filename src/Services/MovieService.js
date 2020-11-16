@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 const MOVIES_API = 'movies'
-const MOVIES_HOST = 'http://localhost:8080'
+// const MOVIES_HOST = 'http://localhost:8080'
+const MOVIES_HOST = 'https://muvieservices.herokuapp.com';
 const MOVIES_API_URL = `${MOVIES_HOST}/${MOVIES_API}`
 
 export default class MovieDataService {
