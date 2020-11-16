@@ -17,13 +17,15 @@ class MovieAddEditComponent extends Component {
             signupFormDivStyle: {
                 margin: '20px',
             },
-            submittedMovie:{ 
+            submittedMovie:{
+                movie_id: '', 
                 moviename: '',
                 director: '',
                 imdbscore: '',
                 genre: [],
                 popularity: '',
             },
+            movie_id: this.props.movieToEdit && this.props.movieToEdit.movie_id,
             moviename: this.props.movieToEdit && this.props.movieToEdit.name ? this.props.movieToEdit.name :'',
             director: this.props.movieToEdit && this.props.movieToEdit.director ? this.props.movieToEdit.director : '',
             popularity: this.props.movieToEdit && this.props.movieToEdit.popularity ? this.props.movieToEdit.popularity : '',
@@ -72,6 +74,7 @@ class MovieAddEditComponent extends Component {
     });
     let addEditResponseData = {};
     let submittedMovie = {
+        movie_id: this.state.movie_id,
         name: this.state.moviename, 
         director: this.state.director,
         imdb_score: (this.state.popularity / 10).toFixed(1),
@@ -85,28 +88,35 @@ class MovieAddEditComponent extends Component {
             response => {
                 console.log('update movie api response -', response.data);
                 
-                addEditResponseData = {
-                    addEditResponseData: response.data,
-                    isSuccess: true,
-                    isEditResponse: true,
-                }
+                if(response.data && response.data.movie_id) {
+                    addEditResponseData = {
+                        addEditResponseData: response.data,
+                        isSuccess: true,
+                        isEditResponse: true,
+                    }
 
-                this.setState({
-                    editedMovie: response.data,
-                    responseData: addEditResponseData,
-                });
-                this.props.responseCallback(addEditResponseData);
+                    this.setState({
+                        editedMovie: response.data,
+                        responseData: addEditResponseData,
+                    });
+                    this.props.responseCallback(addEditResponseData);
+                } else {
+                    addEditResponseData = {
+                        isSuccess: false,
+                        isEditResponse: true,
+                        addUpdateApiError: true,
+                        addUpdateApiErrorMessage: 'Sorry , couldnt update record. RecordNotFound',
+                    }
+                    this.setState({
+                        responseData: addEditResponseData,
+                    });
+                }
             }
         ).catch((err) => {
-            addEditResponseData = {
-                isSuccess: false,
-                isEditResponse: true,
-            }
           
-            this.setState({ 
-                responseData: addEditResponseData,
-                apiError: true,
-                apiErrorMessage: 'Sorry , error in backend api . Please try again',
+            this.setState({
+                commonApiError: true,
+                commonApiErrorMessage: 'Sorry , error in backend api . Please try again',
             });
             return Promise.reject(err);
         });
@@ -118,30 +128,39 @@ class MovieAddEditComponent extends Component {
         this.movieService.addMovie(submittedMovie.name,submittedMovie).then(
             response => {
                 console.log('add movie api response -', response.data);
-                addEditResponseData = {
-                    addEditResponseData: response.data,
-                    isSuccess: true,
-                    isEditResponse: false,
-                    addedMovieName: submittedMovie.name,
-                }
 
-                this.setState({ 
-                    addedMovie: response.data,
-                    responseData: addEditResponseData,
-                });
-                this.props.responseCallback(addEditResponseData);
+                if(response.data) {
+                    addEditResponseData = {
+                        addEditResponseData: response.data,
+                        isSuccess: true,
+                        isEditResponse: false,
+                        addedMovieName: submittedMovie.name,
+                    }
+    
+                    this.setState({ 
+                        addedMovie: response.data,
+                        responseData: addEditResponseData,
+                    });
+                    this.props.responseCallback(addEditResponseData);
+                } else {
+                    
+                    addEditResponseData = { 
+                        isSuccess: false,
+                        isEditResponse: true,
+                        addUpdateApiError: true,
+                        addUpdateApiErrorMessage: 'Sorry , could not add '+ submittedMovie.name +'. Try Again',
+                    }
+
+                    this.setState({
+                        responseData: addEditResponseData,
+                    });
+                }
             }
             
         ).catch((err) => {
-            addEditResponseData = {
-                isSuccess: false,
-                isEditResponse: false,
-                apiError: true,
-                apiErrorMessage: 'Sorry , error in backend api . Please try again',
-            }
-            this.setState({ 
-                apiError: true,
-                responseData: addEditResponseData,
+            this.setState({
+                commonApiError: true,
+                commonApiErrorMessage: 'Sorry , error in backend api . Please try again',
             });
             return Promise.reject(err);
         });
@@ -165,11 +184,16 @@ class MovieAddEditComponent extends Component {
       <div>
 
         <div style={{margin: '40px'}}>
-
-        {/* common api error */}
-        {this.state.apiError && this.state.apiErrorMessage &&
+        
+        {this.state.responseData && this.state.responseData.addUpdateApiError && this.state.responseData.addUpdateApiErrorMessage &&
               <Alert color="danger">
-                {this.state.findApiErrorMessage}
+                {this.state.responseData.addUpdateApiErrorMessage}
+              </Alert>
+        }
+        {/* common api error */}
+        {this.state.commonApiError && this.state.commonApiErrorMessage &&
+              <Alert color="danger">
+                {this.state.commonApiErrorMessage}
               </Alert>
         }
 
